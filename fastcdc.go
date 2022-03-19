@@ -1,28 +1,22 @@
-//go:generate go run _gen/gear.go -seed 1337 -output gear.go
-
+// Package fastcdc implements the fastcdc content-defined chunking (CDC) algorithm.
+// CDC is a building block for data deduplication and splits an input stream into
+// variable-sized chunks that are likely to be repeated in other, partially similar, inputs.
 package fastcdc
 
+//go:generate go run _gen/gear.go -seed 1337 -output gear.go
+
 import (
-	"bytes"
 	"io"
-	"sync"
 )
 
-// const minsize = 2 << 10
-
-// const maskA = 0x0000d90303530000 // 13 ‘1’ bits
-
-const avgsize = 8 << 10
-const maxsize = 64 << 10
-
-const maskS = 0x0003590703530000 // 15 ‘1’ bits
-const maskL = 0x0000d90003530000 // 11 ‘1’ bits
-
-var bufpool = sync.Pool{
-	New: func() interface{} {
-		return bytes.NewBuffer(make([]byte, 0, maxsize<<1))
-	},
-}
+const (
+	minsize = 2 << 10
+	avgsize = 8 << 10
+	maxsize = 64 << 10
+	bufsize = maxsize << 1
+	maskS   = (1 << 15) - 1
+	maskL   = (1 << 11) - 1
+)
 
 func min(a, b int) int {
 	if a < b {
@@ -31,40 +25,70 @@ func min(a, b int) int {
 	return b
 }
 
-func Do(r io.Reader, emit func(off int64, fp uint64, p []byte)) error {
-	var lo, hi int64
-	buf := bufpool.Get().(*bytes.Buffer)
-	defer bufpool.Put(buf)
+func copyBuffer(dst io.Writer, src io.Reader, buf []byte) (n int64, err error) {
+	tail := 0
+	head, err := io.ReadFull(src, buf)
 
-	for {
-		if short := int64(maxsize - buf.Len()); short > 0 {
-			_, err := buf.ReadFrom(io.LimitReader(r, short))
-			if err != nil {
-				return err
-			}
-		}
+	for head > 0 || err == nil {
+		i, fp := min(head, tail+minsize), uint16(0)
 
-		if buf.Len() == 0 {
-			return nil
-		}
-
-		b := buf.Bytes()
-		i, fp := 0, uint64(0)
-
-		for pivot := min(len(b), avgsize); i < pivot; i++ {
-			if fp = (fp << 1) + gear[b[i]]; fp&maskS == 0 {
+		for end := min(head, tail+avgsize); i < end; i++ {
+			if fp = (fp << 1) + gear[buf[i]]; fp&maskS == 0 {
 				goto emitchunk
 			}
 		}
 
-		for max := min(len(b), maxsize); i < max; i++ {
-			if fp = (fp << 1) + gear[b[i]]; fp&maskL == 0 {
+		for end := min(head, tail+maxsize); i < end; i++ {
+			if fp = (fp << 1) + gear[buf[i]]; fp&maskL == 0 {
 				break
 			}
 		}
 
 	emitchunk:
-		lo, hi = hi, hi+int64(i)
-		emit(lo, fp, buf.Next(i))
+		if x, err := dst.Write(buf[tail:i]); err != nil {
+			return n + int64(x), err
+		}
+
+		n, tail = n+int64(i-tail), i
+
+		if unread := head - tail; unread < maxsize {
+			copy(buf, buf[tail:])
+			var k int
+			k, err = io.ReadFull(src, buf[unread:])
+			tail, head = 0, unread+k
+		}
 	}
+
+	if err == io.EOF {
+		err = nil
+	}
+
+	return
+}
+
+// Copy copies from src to dst in content-defined chunk sizes,
+// as opposed to io.Copy which copies in fixed-sized chunks.
+//
+// Copy copies from src to dst until either EOF is reached
+// on src or an error occurs. It returns the number of bytes
+// copied and the first error encountered while copying, if any.
+//
+// A successful Copy returns err == nil, not err == EOF.
+// Because Copy is defined to read from src until EOF, it does
+// not treat an EOF from Read as an error to be reported.
+func Copy(dst io.Writer, src io.Reader) (n int64, err error) {
+	return copyBuffer(dst, src, make([]byte, bufsize))
+}
+
+// CopyBuffer is identical to Copy except that it stages through the
+// provided buffer rather than allocating a temporary one.
+// If buf is nil, one is allocated; otherwise if it has
+// zero length, CopyBuffer panics.
+func CopyBuffer(dst io.Writer, src io.Reader, buf []byte) (n int64, err error) {
+	if buf == nil {
+		buf = make([]byte, bufsize)
+	} else if len(buf) == 0 {
+		panic("empty buffer in CopyBuffer")
+	}
+	return copyBuffer(dst, src, buf)
 }
