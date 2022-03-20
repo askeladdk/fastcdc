@@ -52,10 +52,15 @@ func copyBuffer(dst io.Writer, src io.Reader, buf []byte) (n int64, err error) {
 		n, tail = n+int64(i-tail), i
 
 		if unread := head - tail; unread < maxsize {
-			copy(buf, buf[tail:])
+			if tail > 0 && tail-len(buf) < maxsize {
+				copy(buf, buf[tail:])
+				tail = 0
+			}
 			var k int
-			k, err = io.ReadFull(src, buf[unread:])
-			tail, head = 0, unread+k
+			if err != io.EOF {
+				k, err = io.ReadFull(src, buf[unread:])
+			}
+			head = tail + unread + k
 		}
 	}
 

@@ -35,21 +35,21 @@ Read the rest of the [documentation on pkg.go.dev](https://godoc.org/github.com/
 
 ## Performance
 
-Unscientific benchmarks suggest that our implementation is slightly faster than the next best implementation and is the only one that makes zero allocations. Our implementation is also much simpler than the others, being less than 100 lines of code including comments. The number of generated chunks is roughly the same.
+Unscientific benchmarks suggest that our implementation is 20% faster than the next best implementation and is the only one that makes zero allocations. Our implementation is also much simpler than the others, being less than 100 lines of code including comments. The number of generated chunks is roughly the same.
 
 ```sh
 % cd _bench_test
-% go test -bench=. -benchmem -benchtime=100x
+% go test -bench=. -benchmem
 goos: darwin
 goarch: amd64
 pkg: bench_test
 cpu: Intel(R) Core(TM) i5-5287U CPU @ 2.90GHz
-BenchmarkAskeladdk-4     	     100	  97377375 ns/op	1378.33 MB/s	     14348 chunks	    1311 B/op	       0 allocs/op
-BenchmarkTigerwill90-4   	     100	 100602996 ns/op	1334.13 MB/s	     16027 chunks	    1360 B/op	       1 allocs/op
-BenchmarkJotFS-4         	     100	 110337104 ns/op	1216.43 MB/s	     14651 chunks	  131184 B/op	       2 allocs/op
-BenchmarkPoolpOrg-4      	     100	 250901417 ns/op	 534.94 MB/s	     14328 chunks	144083731 B/op	   42990 allocs/op
+BenchmarkAskeladdk-4     	      14	  82502821 ns/op	1626.83 MB/s	     14348 chunks	    9364 B/op	       0 allocs/op
+BenchmarkTigerwill90-4   	      12	  99786487 ns/op	1345.05 MB/s	     16027 chunks	   10985 B/op	       1 allocs/op
+BenchmarkJotFS-4         	      10	 107251454 ns/op	1251.43 MB/s	     14651 chunks	  131184 B/op	       2 allocs/op
+BenchmarkPoolpOrg-4      	       4	 250803846 ns/op	 535.15 MB/s	     14328 chunks	144083848 B/op	   42990 allocs/op
 PASS
-ok  	bench_test	57.892s
+ok  	bench_test	8.117s
 ```
 
 ## License
