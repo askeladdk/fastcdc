@@ -13,8 +13,13 @@ import (
 	tigerwill90 "github.com/tigerwill90/fastcdc"
 )
 
-const avgsize = 8 << 10
-const datalen = 128 << 20
+const (
+	minsize = 2 << 10
+	avgsize = 8 << 10
+	maxsize = 64 << 10
+	norm    = 0
+	datalen = 128 << 20
+)
 
 type writerFunc func([]byte) (int, error)
 
@@ -28,7 +33,7 @@ func BenchmarkAskeladdk(b *testing.B) {
 	r := bytes.NewReader(rb)
 	b.SetBytes(int64(r.Len()))
 	b.ResetTimer()
-	buf := make([]byte, avgsize*16)
+	buf := make([]byte, maxsize<<1)
 	nchunks := 0
 	w := writerFunc(func(p []byte) (int, error) {
 		nchunks++
@@ -53,7 +58,7 @@ func BenchmarkTigerwill90(b *testing.B) {
 	chunker, _ := tigerwill90.NewChunker(
 		context.Background(),
 		tigerwill90.WithStreamMode(),
-		tigerwill90.WithChunksSize(avgsize/4, avgsize, avgsize*8),
+		tigerwill90.WithChunksSize(minsize, avgsize, maxsize),
 	)
 	for i := 0; i < b.N; i++ {
 		_ = chunker.Split(r, chunkcounter)
@@ -69,10 +74,10 @@ func BenchmarkJotFS(b *testing.B) {
 	b.ResetTimer()
 	nchunks := 0
 	opts := jotfs.Options{
-		MinSize:       avgsize / 4,
+		MinSize:       minsize,
 		AverageSize:   avgsize,
-		MaxSize:       avgsize * 8,
-		Normalization: 2,
+		MaxSize:       maxsize,
+		Normalization: norm,
 	}
 	for i := 0; i < b.N; i++ {
 		chunker, _ := jotfs.NewChunker(r, opts)
@@ -91,9 +96,9 @@ func BenchmarkPoolpOrg(b *testing.B) {
 	b.ResetTimer()
 	nchunks := 0
 	opts := poolporg.ChunkerOpts{
-		MinSize:    avgsize / 4,
+		MinSize:    minsize,
 		NormalSize: avgsize,
-		MaxSize:    avgsize * 8,
+		MaxSize:    maxsize,
 	}
 	for i := 0; i < b.N; i++ {
 		chunker, _ := poolporg.NewChunker(r, &opts)
