@@ -14,6 +14,8 @@ func main() {
 	outp := flag.String("output", "gear.go", "output filename")
 	flag.Parse()
 
+	_ = os.Remove(*outp)
+
 	f, _ := os.OpenFile(*outp, os.O_WRONLY|os.O_CREATE, 0644)
 	defer f.Close()
 	rnd := rand.New(rand.NewSource(*seed))
