@@ -14,8 +14,7 @@ const (
 	avgsize = 8 << 10
 	maxsize = 64 << 10
 	bufsize = maxsize << 1
-	maskS   = (1 << 15) - 1
-	maskL   = (1 << 11) - 1
+	maskL   = avgsize - 1
 )
 
 func min(a, b int) int {
@@ -32,19 +31,12 @@ func copyBuffer(dst io.Writer, src io.Reader, buf []byte) (n int64, err error) {
 	for head > 0 || err == nil {
 		i, fp := min(head, tail+minsize), uint16(0)
 
-		for end := min(head, tail+avgsize); i < end; i++ {
-			if fp = (fp << 1) + gear[buf[i]]; fp&maskS == 0 {
-				goto emitchunk
-			}
-		}
-
 		for end := min(head, tail+maxsize); i < end; i++ {
 			if fp = (fp << 1) + gear[buf[i]]; fp&maskL == 0 {
 				break
 			}
 		}
 
-	emitchunk:
 		if x, err := dst.Write(buf[tail:i]); err != nil {
 			return n + int64(x), err
 		}

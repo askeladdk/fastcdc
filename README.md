@@ -29,7 +29,7 @@ Use `CopyBuffer` to pass a buffer. The buffer size should be 64KB or larger for 
 n, err := fastcdc.CopyBuffer(w, r, make([]byte, 128 << 10))
 ```
 
-Unlike other implementations it is not possible to tweak the parameters. This is not needed because there is a sweet spot of practical chunk sizes that enables efficient deduplication: Too small reduces performance due to overhead and too high reduces deduplication due to overly coarse chunks. Hence, chunks are sized between 2KB and 64KB with an average of 8KB. The final chunk can be smaller than 2KB.
+Unlike other implementations it is not possible to tweak the parameters. This is not needed because there is a sweet spot of practical chunk sizes that enables efficient deduplication: Too small reduces performance due to overhead and too high reduces deduplication due to overly coarse chunks. Hence, chunks are sized between 2KB and 64KB with an average of about 10KB (2KB + 8KB). The final chunk can be smaller than 2KB. Normalized chunking as described in the paper is not implemented because it does not appear to improve deduplication.
 
 Read the rest of the [documentation on pkg.go.dev](https://godoc.org/github.com/askeladdk/fastcdc). It's easy-peasy!
 
@@ -44,12 +44,12 @@ goos: darwin
 goarch: amd64
 pkg: bench_test
 cpu: Intel(R) Core(TM) i5-5287U CPU @ 2.90GHz
-BenchmarkAskeladdk-4     	      14	  82502821 ns/op	1626.83 MB/s	     14348 chunks	    9364 B/op	       0 allocs/op
-BenchmarkTigerwill90-4   	      12	  99786487 ns/op	1345.05 MB/s	     16027 chunks	   10985 B/op	       1 allocs/op
-BenchmarkJotFS-4         	      10	 107251454 ns/op	1251.43 MB/s	     14651 chunks	  131184 B/op	       2 allocs/op
-BenchmarkPoolpOrg-4      	       4	 250803846 ns/op	 535.15 MB/s	     14328 chunks	144083848 B/op	   42990 allocs/op
+BenchmarkAskeladdk-4     	      14	  81648896 ns/op	1643.84 MB/s	     13014 chunks	    9364 B/op	       0 allocs/op
+BenchmarkTigerwill90-4   	      12	  99914431 ns/op	1343.33 MB/s	     16027 chunks	   10985 B/op	       1 allocs/op
+BenchmarkJotFS-4         	      10	 107616777 ns/op	1247.18 MB/s	     14651 chunks	  131184 B/op	       2 allocs/op
+BenchmarkPoolpOrg-4      	       4	 251425674 ns/op	 533.83 MB/s	     14328 chunks	144083696 B/op	   42990 allocs/op
 PASS
-ok  	bench_test	8.117s
+ok  	bench_test	8.210s
 ```
 
 ## License
