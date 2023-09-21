@@ -1,6 +1,6 @@
+github.com/PlakarLabs/go-fastcdc v0.5.0 h1:jxB/scLEJRj705GDP7/osRX6Pi3BwR382hqyri0U8I4=
+github.com/PlakarLabs/go-fastcdc v0.5.0/go.mod h1:vhDUv02Bos7HbLNyS4onBbOFGu8RoqIq8hCe1UPaGzI=
 github.com/jotfs/fastcdc-go v0.2.0 h1:WHYIGk3k9NumGWfp4YMsemEcx/s4JKpGAa6tpCpHJOo=
 github.com/jotfs/fastcdc-go v0.2.0/go.mod h1:PGFBIloiASFbiKnkCd/hmHXxngxYDYtisyurJ/zyDNM=
-github.com/poolpOrg/go-fastcdc v0.0.0-20211130135149-aa8a1e8a10db h1:PfgdUkbymefXsGoYrYjCpZh1PcmQ3tDHKGt1fSDm1+o=
-github.com/poolpOrg/go-fastcdc v0.0.0-20211130135149-aa8a1e8a10db/go.mod h1:9KpZcfiu0ZuQsRGTJ8ggDEjKUndlV6TFf8IMKNhW1qA=
 github.com/tigerwill90/fastcdc v1.2.2 h1:tigEC8ONgsN9MreH27XU345jnuH8cF/Iw1EPkVr8JPk=
 github.com/tigerwill90/fastcdc v1.2.2/go.mod h1:gn9sPRoM0lazNdSkncX+QvvD/P7/wptXVLkVUEL/5Ck=

@@ -35,7 +35,7 @@ Read the rest of the [documentation on pkg.go.dev](https://godoc.org/github.com/
 
 ## Performance
 
-Unscientific benchmarks suggest that our implementation is 20% faster than the next best implementation and is the only one that makes zero allocations. Our implementation is also much simpler than the others, being less than 100 lines of code including comments. The number of generated chunks is roughly the same.
+Unscientific benchmarks on go1.21.1 suggest that this implementation is roughly 15% faster than the next best implementation and is the only one that makes zero allocations. Our implementation is also much simpler than the others, being less than 100 lines of code including comments. The number of generated chunks is roughly the same.
 
 ```sh
 % cd _bench_test
@@ -44,12 +44,12 @@ goos: darwin
 goarch: amd64
 pkg: bench_test
 cpu: Intel(R) Core(TM) i5-5287U CPU @ 2.90GHz
-BenchmarkAskeladdk-4     	      14	  81648896 ns/op	1643.84 MB/s	     13014 chunks	    9364 B/op	       0 allocs/op
-BenchmarkTigerwill90-4   	      12	  99914431 ns/op	1343.33 MB/s	     16027 chunks	   10985 B/op	       1 allocs/op
-BenchmarkJotFS-4         	      10	 107616777 ns/op	1247.18 MB/s	     14651 chunks	  131184 B/op	       2 allocs/op
-BenchmarkPoolpOrg-4      	       4	 251425674 ns/op	 533.83 MB/s	     14328 chunks	144083696 B/op	   42990 allocs/op
+BenchmarkAskeladdk-4     	      14	  96068850 ns/op	1397.10 MB/s	     13014 chunks	    9364 B/op	       0 allocs/op
+BenchmarkTigerwill90-4   	      10	 100792045 ns/op	1331.63 MB/s	     16027 chunks	   13172 B/op	       1 allocs/op
+BenchmarkJotFS-4         	       9	 128299966 ns/op	1046.12 MB/s	     14651 chunks	  131184 B/op	       2 allocs/op
+BenchmarkPlakarLabs-4    	      12	  97721841 ns/op	1373.47 MB/s	     15406 chunks	  131200 B/op	       4 allocs/op
 PASS
-ok  	bench_test	8.210s
+ok  	bench_test	7.703s
 ```
 
 ## License

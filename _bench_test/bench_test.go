@@ -7,9 +7,9 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/askeladdk/fastcdc"
+	plakarlabs "github.com/PlakarLabs/go-fastcdc"
+	askeladdk "github.com/askeladdk/fastcdc"
 	jotfs "github.com/jotfs/fastcdc-go"
-	poolporg "github.com/poolpOrg/go-fastcdc"
 	tigerwill90 "github.com/tigerwill90/fastcdc"
 )
 
@@ -40,7 +40,7 @@ func BenchmarkAskeladdk(b *testing.B) {
 		return len(p), nil
 	})
 	for i := 0; i < b.N; i++ {
-		_, _ = fastcdc.CopyBuffer(w, r, buf)
+		_, _ = askeladdk.CopyBuffer(w, r, buf)
 		r.Reset(rb)
 	}
 	b.ReportMetric(float64(nchunks)/float64(b.N), "chunks")
@@ -90,18 +90,18 @@ func BenchmarkJotFS(b *testing.B) {
 	b.ReportMetric(float64(nchunks)/float64(b.N), "chunks")
 }
 
-func BenchmarkPoolpOrg(b *testing.B) {
+func BenchmarkPlakarLabs(b *testing.B) {
 	r := bytes.NewReader(rb)
 	b.SetBytes(int64(r.Len()))
 	b.ResetTimer()
 	nchunks := 0
-	opts := poolporg.ChunkerOpts{
+	opts := plakarlabs.ChunkerOpts{
 		MinSize:    minsize,
 		NormalSize: avgsize,
 		MaxSize:    maxsize,
 	}
 	for i := 0; i < b.N; i++ {
-		chunker, _ := poolporg.NewChunker(r, &opts)
+		chunker, _ := plakarlabs.NewChunker(r, &opts)
 		for err := error(nil); err == nil; {
 			_, err = chunker.Next()
 			nchunks++
