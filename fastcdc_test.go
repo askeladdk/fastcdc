@@ -54,3 +54,35 @@ func TestCopyRobustness(t *testing.T) {
 		})
 	}
 }
+
+func Benchmark(b *testing.B) {
+	for _, x := range []struct {
+		Size int
+		Name string
+	}{
+		{1 << 10, "1KB"},
+		{4 << 10, "4KB"},
+		{16 << 10, "16KB"},
+		{64 << 10, "64KB"},
+		{256 << 10, "256KB"},
+		{1 << 20, "1MB"},
+		{4 << 20, "4MB"},
+		{16 << 20, "16MB"},
+		{64 << 20, "64MB"},
+		{256 << 20, "256MB"},
+		{1 << 30, "1GB"},
+	} {
+		x := x
+		b.Run(x.Name, func(b *testing.B) {
+			buf := make([]byte, bufsize)
+			data := make([]byte, x.Size)
+			r := bytes.NewReader(data)
+			b.ResetTimer()
+			b.SetBytes(int64(x.Size))
+			for i := 0; i < b.N; i++ {
+				r.Reset(data)
+				_, _ = CopyBuffer(io.Discard, r, buf)
+			}
+		})
+	}
+}
