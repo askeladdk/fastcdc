@@ -1,6 +1,7 @@
 package fastcdc
 
 import (
+	"bytes"
 	"hash/fnv"
 	"io"
 	"math/rand"
@@ -33,8 +34,9 @@ func TestCopyErrReader(t *testing.T) {
 }
 
 func TestCopyRobustness(t *testing.T) {
-	count := int64(512<<10 - 1)
+	data := make([]byte, (1<<20)-1)
 	rnd := rand.New(rand.NewSource(0))
+	_, _ = io.ReadFull(rnd, data)
 
 	buf := make([]byte, 128<<10)
 
@@ -42,13 +44,13 @@ func TestCopyRobustness(t *testing.T) {
 		N string
 		R io.Reader
 	}{
-		{"DataErrReader", iotest.DataErrReader(io.LimitReader(rnd, count))},
-		{"OneByteReader", iotest.OneByteReader(io.LimitReader(rnd, count))},
-		{"TimeoutReader", iotest.TimeoutReader(io.LimitReader(rnd, count))},
+		{"DataErrReader", iotest.DataErrReader(bytes.NewReader(data))},
+		{"OneByteReader", iotest.OneByteReader(bytes.NewReader(data))},
+		{"TimeoutReader", iotest.TimeoutReader(bytes.NewReader(data))},
 	} {
 		t.Run(testCase.N, func(t *testing.T) {
 			n, err := CopyBuffer(io.Discard, testCase.R, buf)
-			if n != count || err != nil {
+			if n != int64(len(data)) || err != nil {
 				t.Error(n, err)
 			}
 		})
