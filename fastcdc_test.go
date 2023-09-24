@@ -77,7 +77,8 @@ func Benchmark(b *testing.B) {
 		x := x
 		b.Run(x.Name, func(b *testing.B) {
 			buf := make([]byte, bufsize)
-			data := make([]byte, x.Size)
+			rnd := rand.New(rand.NewSource(0))
+			data, _ := io.ReadAll(io.LimitReader(rnd, int64(x.Size)))
 			r := bytes.NewReader(data)
 			b.ResetTimer()
 			b.SetBytes(int64(x.Size))
