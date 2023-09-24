@@ -10,11 +10,12 @@ import (
 )
 
 const (
-	minsize = 2 << 10
-	avgsize = 8 << 10
-	maxsize = 64 << 10
+	minsize = 32 << 10
+	avgsize = 64 << 10
+	maxsize = 128 << 10
 	bufsize = maxsize << 1
-	maskL   = avgsize - 1
+	maskL   = 0x0000d90003530000
+	maskS   = 0x0003590703530000
 )
 
 func min(a, b int) int {
@@ -29,14 +30,21 @@ func copyBuffer(dst io.Writer, src io.Reader, buf []byte) (n int64, err error) {
 	head, err := io.ReadFull(src, buf)
 
 	for head > 0 || err == nil {
-		i, fp := min(head, tail+minsize), uint16(0)
+		i, fp := min(head, tail+minsize), uint64(0)
+
+		for end := min(head, tail+avgsize); i < end; i++ {
+			if fp = fp<<1 + gear[buf[i]]; fp&maskS == 0 {
+				goto emitchunk
+			}
+		}
 
 		for end := min(head, tail+maxsize); i < end; i++ {
-			if fp = (fp << 1) + gear[buf[i]]; fp&maskL == 0 {
+			if fp = fp<<1 + gear[buf[i]]; fp&maskL == 0 {
 				break
 			}
 		}
 
+	emitchunk:
 		if x, err := dst.Write(buf[tail:i]); err != nil {
 			return n + int64(x), err
 		}
@@ -82,7 +90,7 @@ func CopyBuffer(dst io.Writer, src io.Reader, buf []byte) (n int64, err error) {
 	if buf == nil {
 		buf = make([]byte, bufsize)
 	} else if len(buf) == 0 {
-		panic("empty buffer in CopyBuffer")
+		panic("fastcdc: empty buffer in CopyBuffer")
 	}
 	return copyBuffer(dst, src, buf)
 }

@@ -14,10 +14,10 @@ import (
 )
 
 const (
-	minsize = 2 << 10
-	avgsize = 8 << 10
-	maxsize = 64 << 10
-	norm    = 0
+	minsize = 32 << 10
+	avgsize = 64 << 10
+	maxsize = 128 << 10
+	norm    = 2
 	datalen = 128 << 20
 )
 
@@ -33,7 +33,7 @@ func BenchmarkAskeladdk(b *testing.B) {
 	r := bytes.NewReader(rb)
 	b.SetBytes(int64(r.Len()))
 	b.ResetTimer()
-	buf := make([]byte, maxsize<<1)
+	buf := make([]byte, 1<<20)
 	nchunks := 0
 	w := writerFunc(func(p []byte) (int, error) {
 		nchunks++

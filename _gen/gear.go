@@ -22,13 +22,13 @@ func main() {
 	fmt.Fprintln(f, "// Code generated with _gen/gear.go. DO NOT EDIT.\n")
 	fmt.Fprintln(f, "package fastcdc\n")
 	fmt.Fprintf(f, "// gear is generated from rand.New(rand.NewSource(%d)).\n", *seed)
-	fmt.Fprintln(f, "var gear [256]uint16 = [...]uint16{")
+	fmt.Fprintln(f, "var gear [256]uint64 = [...]uint64{")
 	for i := 0; i < 64; i++ {
 		fmt.Fprintf(f, "\t")
 		for j := 0; j < 3; j++ {
-			fmt.Fprintf(f, "0x%04x, ", rnd.Uint64()>>48)
+			fmt.Fprintf(f, "0x%016x, ", rnd.Uint64())
 		}
-		fmt.Fprintf(f, "0x%04x,\n", rnd.Uint64()>>48)
+		fmt.Fprintf(f, "0x%016x,\n", rnd.Uint64())
 	}
 	fmt.Fprintln(f, "}")
 }
