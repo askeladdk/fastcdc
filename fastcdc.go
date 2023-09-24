@@ -44,15 +44,12 @@ func copyBuffer(dst io.Writer, src io.Reader, buf []byte) (n int64, err error) {
 		n, tail = n+int64(i-tail), i
 
 		if unread := head - tail; unread < maxsize {
-			if tail > 0 && tail-len(buf) < maxsize {
-				copy(buf, buf[tail:])
-				tail = 0
-			}
+			copy(buf, buf[tail:head])
 			var k int
 			if err != io.EOF {
 				k, err = io.ReadFull(src, buf[unread:])
 			}
-			head = tail + unread + k
+			tail, head = 0, unread+k
 		}
 	}
 
@@ -60,7 +57,7 @@ func copyBuffer(dst io.Writer, src io.Reader, buf []byte) (n int64, err error) {
 		err = nil
 	}
 
-	return
+	return n, err
 }
 
 // Copy copies from src to dst in content-defined chunk sizes,
