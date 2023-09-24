@@ -44,6 +44,7 @@ func BenchmarkAskeladdk(b *testing.B) {
 		r.Reset(rb)
 	}
 	b.ReportMetric(float64(nchunks)/float64(b.N), "chunks")
+	b.ReportMetric(float64(datalen)/(float64(nchunks)/float64(b.N)), "avgsz")
 }
 
 func BenchmarkTigerwill90(b *testing.B) {
@@ -66,6 +67,7 @@ func BenchmarkTigerwill90(b *testing.B) {
 		r.Reset(rb)
 	}
 	b.ReportMetric(float64(nchunks)/float64(b.N), "chunks")
+	b.ReportMetric(float64(datalen)/(float64(nchunks)/float64(b.N)), "avgsz")
 }
 
 func BenchmarkJotFS(b *testing.B) {
@@ -88,6 +90,7 @@ func BenchmarkJotFS(b *testing.B) {
 		r.Reset(rb)
 	}
 	b.ReportMetric(float64(nchunks)/float64(b.N), "chunks")
+	b.ReportMetric(float64(datalen)/(float64(nchunks)/float64(b.N)), "avgsz")
 }
 
 func BenchmarkPlakarLabs(b *testing.B) {
@@ -109,4 +112,5 @@ func BenchmarkPlakarLabs(b *testing.B) {
 		r.Reset(rb)
 	}
 	b.ReportMetric(float64(nchunks)/float64(b.N), "chunks")
+	b.ReportMetric(float64(datalen)/(float64(nchunks)/float64(b.N)), "avgsz")
 }
