@@ -14,9 +14,9 @@ import (
 )
 
 const (
-	minsize = 32 << 10
-	avgsize = 64 << 10
-	maxsize = 128 << 10
+	minsize = 1 << 20
+	avgsize = 2 << 20
+	maxsize = 4 << 20
 	norm    = 2
 	datalen = 128 << 20
 )
@@ -30,17 +30,24 @@ func (fn writerFunc) Write(p []byte) (int, error) {
 var rb, _ = io.ReadAll(io.LimitReader(rand.New(rand.NewSource(0)), datalen))
 
 func BenchmarkAskeladdk(b *testing.B) {
+	c := askeladdk.Chunker{
+		MinSize: minsize,
+		AvgSize: avgsize,
+		MaxSize: maxsize,
+		Norm:    norm,
+	}
+
 	r := bytes.NewReader(rb)
 	b.SetBytes(int64(r.Len()))
 	b.ResetTimer()
-	buf := make([]byte, 1<<20)
+	buf := make([]byte, maxsize<<1)
 	nchunks := 0
 	w := writerFunc(func(p []byte) (int, error) {
 		nchunks++
 		return len(p), nil
 	})
 	for i := 0; i < b.N; i++ {
-		_, _ = askeladdk.CopyBuffer(w, r, buf)
+		_, _ = c.CopyBuffer(w, r, buf)
 		r.Reset(rb)
 	}
 	b.ReportMetric(float64(nchunks)/float64(b.N), "chunks")

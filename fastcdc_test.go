@@ -34,10 +34,8 @@ func TestCopyErrReader(t *testing.T) {
 }
 
 func TestCopyRobustness(t *testing.T) {
-	data := make([]byte, (1<<20)-1)
 	rnd := rand.New(rand.NewSource(0))
-	_, _ = io.ReadFull(rnd, data)
-
+	data, _ := io.ReadAll(io.LimitReader(rnd, (1<<20)-1))
 	buf := make([]byte, 128<<10)
 
 	for _, testCase := range []struct {
@@ -58,6 +56,10 @@ func TestCopyRobustness(t *testing.T) {
 }
 
 func Benchmark(b *testing.B) {
+	rnd := rand.New(rand.NewSource(0))
+	data, _ := io.ReadAll(io.LimitReader(rnd, int64(1<<30)))
+	buf := make([]byte, 256<<10)
+
 	for _, x := range []struct {
 		Size int
 		Name string
@@ -76,14 +78,11 @@ func Benchmark(b *testing.B) {
 	} {
 		x := x
 		b.Run(x.Name, func(b *testing.B) {
-			buf := make([]byte, bufsize)
-			rnd := rand.New(rand.NewSource(0))
-			data, _ := io.ReadAll(io.LimitReader(rnd, int64(x.Size)))
-			r := bytes.NewReader(data)
+			r := bytes.NewReader(data[:x.Size])
 			b.ResetTimer()
 			b.SetBytes(int64(x.Size))
 			for i := 0; i < b.N; i++ {
-				r.Reset(data)
+				r.Reset(data[:x.Size])
 				_, _ = CopyBuffer(io.Discard, r, buf)
 			}
 		})

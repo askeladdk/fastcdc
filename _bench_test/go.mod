@@ -1,6 +1,8 @@
 module bench_test
 
-go 1.17
+go 1.21
+
+toolchain go1.21.1
 
 require (
 	github.com/PlakarLabs/go-fastcdc v0.5.0

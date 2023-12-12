@@ -7,39 +7,59 @@ package fastcdc
 
 import (
 	"io"
+	"math"
 )
 
-const (
-	minsize = 32 << 10
-	avgsize = 64 << 10
-	maxsize = 128 << 10
-	bufsize = maxsize << 1
-	maskL   = 0x0000d90003530000
-	maskS   = 0x0003590703530000
-)
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
+// Chunker is a configurable content defined chunker.
+type Chunker struct {
+	// MinSize is the minimum chunk size in bytes.
+	MinSize int
+	// AvgSize is the average chunk size in bytes.
+	AvgSize int
+	// MaxSize is the maximum chunk size in bytes.
+	MaxSize int
+	// Norm is the normalization factor. Set to zero to disable normalization.
+	Norm int
 }
 
-func copyBuffer(dst io.Writer, src io.Reader, buf []byte) (n int64, err error) {
+// Copy copies from src to dst in content-defined chunk sizes.
+// A successful Copy returns err == nil.
+func (c Chunker) Copy(dst io.Writer, src io.Reader) (n int64, err error) {
+	return c.copyBuffer(dst, src, make([]byte, c.MaxSize<<1))
+}
+
+// CopyBuffer is identical to Copy except that it stages through the
+// provided buffer rather than allocating a temporary one.
+func (c Chunker) CopyBuffer(dst io.Writer, src io.Reader, buf []byte) (n int64, err error) {
+	if buf == nil {
+		buf = make([]byte, c.MaxSize<<1)
+	} else if len(buf) == 0 {
+		panic("fastcdc: empty buffer in CopyBuffer")
+	}
+	return c.copyBuffer(dst, src, buf)
+}
+
+func (c Chunker) copyBuffer(dst io.Writer, src io.Reader, buf []byte) (n int64, err error) {
+	bits := int(math.Floor(math.Log2(float64(c.AvgSize))))
+	maskS := uint64(1)<<max(0, min(bits+c.Norm, 64)) - 1
+	maskL := uint64(1)<<max(0, min(bits-c.Norm, 64)) - 1
+	gear := gear // speeds up the inner loop
+
 	tail := 0
 	head, err := io.ReadFull(src, buf)
 
 	for head > 0 || err == nil {
-		i, fp := min(head, tail+minsize), uint64(0)
+		i := min(head, tail+c.MinSize)
+		fp := uint64(0)
 
-		for end := min(head, tail+avgsize); i < end; i++ {
-			if fp = fp<<1 + gear[buf[i]]; fp&maskS == 0 {
+		for m, j := maskS, min(head, tail+c.AvgSize); i < j; i++ {
+			if fp = fp<<1 + gear[buf[i]]; fp&m == 0 {
 				goto emitchunk
 			}
 		}
 
-		for end := min(head, tail+maxsize); i < end; i++ {
-			if fp = fp<<1 + gear[buf[i]]; fp&maskL == 0 {
+		for m, j := maskL, min(head, tail+c.MaxSize); i < j; i++ {
+			if fp = fp<<1 + gear[buf[i]]; fp&m == 0 {
 				break
 			}
 		}
@@ -51,7 +71,7 @@ func copyBuffer(dst io.Writer, src io.Reader, buf []byte) (n int64, err error) {
 
 		n, tail = n+int64(i-tail), i
 
-		if unread := head - tail; unread < maxsize {
+		if unread := head - tail; unread < c.MaxSize {
 			copy(buf, buf[tail:head])
 			var k int
 			if err != io.EOF {
@@ -68,6 +88,13 @@ func copyBuffer(dst io.Writer, src io.Reader, buf []byte) (n int64, err error) {
 	return n, err
 }
 
+var defaultChunker = Chunker{
+	MinSize: 8 << 10,
+	AvgSize: 16 << 10,
+	MaxSize: 32 << 10,
+	Norm:    2,
+}
+
 // Copy copies from src to dst in content-defined chunk sizes,
 // as opposed to io.Copy which copies in fixed-sized chunks.
 //
@@ -79,7 +106,7 @@ func copyBuffer(dst io.Writer, src io.Reader, buf []byte) (n int64, err error) {
 // Because Copy is defined to read from src until EOF, it does
 // not treat an EOF from Read as an error to be reported.
 func Copy(dst io.Writer, src io.Reader) (n int64, err error) {
-	return copyBuffer(dst, src, make([]byte, bufsize))
+	return defaultChunker.Copy(dst, src)
 }
 
 // CopyBuffer is identical to Copy except that it stages through the
@@ -87,10 +114,10 @@ func Copy(dst io.Writer, src io.Reader) (n int64, err error) {
 // If buf is nil, one is allocated; otherwise if it has
 // zero length, CopyBuffer panics.
 func CopyBuffer(dst io.Writer, src io.Reader, buf []byte) (n int64, err error) {
-	if buf == nil {
-		buf = make([]byte, bufsize)
-	} else if len(buf) == 0 {
-		panic("fastcdc: empty buffer in CopyBuffer")
-	}
-	return copyBuffer(dst, src, buf)
+	return defaultChunker.CopyBuffer(dst, src, buf)
+}
+
+// DefaultChunker returns the chunker used by [Copy] and [CopyBuffer].
+func DefaultChunker() Chunker {
+	return defaultChunker
 }
