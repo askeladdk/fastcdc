@@ -34,9 +34,9 @@ Use `Chunker` to customize the parameters:
 ```go
 chunker := fastcdc.Chunker {
     MinSize: 1 << 20,
-	AvgSize: 2 << 20,
-	MaxSize: 4 << 20,
-	Norm:    2,
+    AvgSize: 2 << 20,
+    MaxSize: 4 << 20,
+    Norm:    2,
 }
 
 buf := make([]byte, 2*chunker.MaxSize)
